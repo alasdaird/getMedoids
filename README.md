@@ -20,8 +20,8 @@ pam clustering labels (if useLab=FALSE), and the distance between each observati
 medoid for the cluster. Medoids have a distance value of 0.
 
 This function requires the following R packages from CRAN:
-cluster
-dplyr
+-cluster
+-dplyr
 
 
 Note:
