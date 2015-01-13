@@ -19,6 +19,10 @@ A data frame is returned that has the IDs, the scaled data observations, supplie
 pam clustering labels (if useLab=FALSE), and the distance between each observation and the 
 medoid for the cluster. Medoids have a distance value of 0.
 
+This function requires the following R packages from CRAN:
+cluster
+dplyr
+
 
 Note:
 The results of which observations are near each other will vary hugely with the scaling.
