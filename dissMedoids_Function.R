@@ -25,6 +25,9 @@ dissMedoids <- function(IDs, x.scaled, clusLabs, medPerClus, useLab=FALSE){
     print("cluster labels not same length as data, assuming all one cluster")
     clusLabs <- as.integer(seq.int(1, nrow(x.scaled), by = 1))
   }
+  if(min(table(clusLabs)) <= 2){
+    print("at least one cluster group has 2 or less observations")
+  }
   
   # function for retrieving the distance between a medoid and another row
   dist2Med <- function(j){
@@ -35,7 +38,7 @@ dissMedoids <- function(IDs, x.scaled, clusLabs, medPerClus, useLab=FALSE){
     # option 1: find medoid within each pre-labelled group
     
     # build data frame from input arguments, with new column for distance to medoid
-    x <- data.frame(ID=IDs, x.scaled, clusLabs=clusLabs, 
+    x <- data.frame(ID=as.character(IDs), x.scaled, clusLabs=clusLabs, 
                     dist2Med = rep(NA, times = nrow(x.scaled)))
   
     for(a in 1:length(unique(clusLabs))){
@@ -54,19 +57,22 @@ dissMedoids <- function(IDs, x.scaled, clusLabs, medPerClus, useLab=FALSE){
       x.dissMat <- as.matrix(x.diss)
       
       # find natural medoids based on dissimilarity using pam algorithm
-      x.pam <- pam(x = x.diss, k = 1, 
-                   diss = TRUE, stand = FALSE, 
-                   keep.diss = FALSE, keep.data=FALSE)
-      
-      medoid       <- x.pam$medoids
-      dists        <- dist2Med(1:sum(clusRows))
-      
-      # set results 
-      x[clusRows, names(x)=="dist2Med"] <- dists
+      if(sum(clusRows) >= 2 ){
+        x.pam <- pam(x = x.diss, k = 1, 
+                     diss = TRUE, stand = FALSE, 
+                     keep.diss = FALSE, keep.data=FALSE)
+        
+        medoid       <- x.pam$medoids
+        dists        <- dist2Med(1:sum(clusRows))
+        # set results 
+        x[clusRows, names(x)=="dist2Med"] <- dists
+      }else{
+        x[clusRows, names(x)=="dist2Med"] <- 0
+      }
     }
     
     # get top (medPerClus) observations closest to the medoid, for each labelled group
-    x.top <- x %>% 
+    x.top <- x[1:nrow(x),] %>%  #got a strange error and specifying all rows fixed it ?? look into later
       group_by(clusLabs) %>% 
       arrange(dist2Med) %>% 
       do(head(.,n = medPerClus))
@@ -89,7 +95,7 @@ dissMedoids <- function(IDs, x.scaled, clusLabs, medPerClus, useLab=FALSE){
     
     
     # build data frame from input arguments, with new column for distance to medoid
-    x <- data.frame(ID=IDs, x.scaled, clusLabs=clusLabs, 
+    x <- data.frame(ID=as.character(IDs), x.scaled, clusLabs=clusLabs, 
                     pamClus = x.pam$clustering, 
                     dist2Med = rep(NA, times = nrow(x.scaled))) 
     
@@ -102,7 +108,7 @@ dissMedoids <- function(IDs, x.scaled, clusLabs, medPerClus, useLab=FALSE){
     }
     
     # get top (medPerClus) observations closest to the medoid, for each pam cluster
-    x.top <- x %>% 
+    x.top <- x[1:nrow(x),]  %>% 
       group_by(pamClus) %>% 
       arrange(dist2Med) %>% 
       do(head(.,n = medPerClus))
